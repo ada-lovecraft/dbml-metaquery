@@ -1,0 +1,53 @@
+{
+  "lockfileVersion": 1,
+  "configVersion": 1,
+  "workspaces": {
+    "": {
+      "name": "dbml-metaquery",
+      "dependencies": {
+        "@dbml/parse": "^7.0.0-alpha.0",
+        "graphology": "^0.25.4",
+        "graphology-shortest-path": "^2.1.0",
+      },
+      "devDependencies": {
+        "@types/bun": "latest",
+        "typescript": "^5.9.3",
+      },
+    },
+  },
+  "packages": {
+    "@dbml/parse": ["@dbml/parse@7.0.0-alpha.1", "", { "dependencies": { "lodash-es": "^4.17.21", "luxon": "^3.7.2" } }, "sha512-0+nJRFj5OQuVwi6zEUqyY39d4kckUxEdzzS7c6PkyAtT68YprYlmF2kZ78NntoOewC5/4HXO8vU1QgmaULoTmA=="],
+
+    "@types/bun": ["@types/bun@1.3.11", "", { "dependencies": { "bun-types": "1.3.11" } }, "sha512-5vPne5QvtpjGpsGYXiFyycfpDF2ECyPcTSsFBMa0fraoxiQyMJ3SmuQIGhzPg2WJuWxVBoxWJ2kClYTcw/4fAg=="],
+
+    "@types/node": ["@types/node@25.5.0", "", { "dependencies": { "undici-types": "~7.18.0" } }, "sha512-jp2P3tQMSxWugkCUKLRPVUpGaL5MVFwF8RDuSRztfwgN1wmqJeMSbKlnEtQqU8UrhTmzEmZdu2I6v2dpp7XIxw=="],
+
+    "@yomguithereal/helpers": ["@yomguithereal/helpers@1.1.1", "", {}, "sha512-UYvAq/XCA7xoh1juWDYsq3W0WywOB+pz8cgVnE1b45ZfdMhBvHDrgmSFG3jXeZSr2tMTYLGHFHON+ekG05Jebg=="],
+
+    "bun-types": ["bun-types@1.3.11", "", { "dependencies": { "@types/node": "*" } }, "sha512-1KGPpoxQWl9f6wcZh57LvrPIInQMn2TQ7jsgxqpRzg+l0QPOFvJVH7HmvHo/AiPgwXy+/Thf6Ov3EdVn1vOabg=="],
+
+    "events": ["events@3.3.0", "", {}, "sha512-mQw+2fkQbALzQ7V0MY0IqdnXNOeTtP4r0lN9z7AAawCXgqea7bDii20AYrIBrFd/Hx0M2Ocz6S111CaFkUcb0Q=="],
+
+    "graphology": ["graphology@0.25.4", "", { "dependencies": { "events": "^3.3.0", "obliterator": "^2.0.2" }, "peerDependencies": { "graphology-types": ">=0.24.0" } }, "sha512-33g0Ol9nkWdD6ulw687viS8YJQBxqG5LWII6FI6nul0pq6iM2t5EKquOTFDbyTblRB3O9I+7KX4xI8u5ffekAQ=="],
+
+    "graphology-indices": ["graphology-indices@0.17.0", "", { "dependencies": { "graphology-utils": "^2.4.2", "mnemonist": "^0.39.0" }, "peerDependencies": { "graphology-types": ">=0.20.0" } }, "sha512-A7RXuKQvdqSWOpn7ZVQo4S33O0vCfPBnUSf7FwE0zNCasqwZVUaCXePuWo5HBpWw68KJcwObZDHpFk6HKH6MYQ=="],
+
+    "graphology-shortest-path": ["graphology-shortest-path@2.1.0", "", { "dependencies": { "@yomguithereal/helpers": "^1.1.1", "graphology-indices": "^0.17.0", "graphology-utils": "^2.4.3", "mnemonist": "^0.39.0" }, "peerDependencies": { "graphology-types": ">=0.20.0" } }, "sha512-KbT9CTkP/u72vGEJzyRr24xFC7usI9Es3LMmCPHGwQ1KTsoZjxwA9lMKxfU0syvT/w+7fZUdB/Hu2wWYcJBm6Q=="],
+
+    "graphology-types": ["graphology-types@0.24.8", "", {}, "sha512-hDRKYXa8TsoZHjgEaysSRyPdT6uB78Ci8WnjgbStlQysz7xR52PInxNsmnB7IBOM1BhikxkNyCVEFgmPKnpx3Q=="],
+
+    "graphology-utils": ["graphology-utils@2.5.2", "", { "peerDependencies": { "graphology-types": ">=0.23.0" } }, "sha512-ckHg8MXrXJkOARk56ZaSCM1g1Wihe2d6iTmz1enGOz4W/l831MBCKSayeFQfowgF8wd+PQ4rlch/56Vs/VZLDQ=="],
+
+    "lodash-es": ["lodash-es@4.17.23", "", {}, "sha512-kVI48u3PZr38HdYz98UmfPnXl2DXrpdctLrFLCd3kOx1xUkOmpFPx7gCWWM5MPkL/fD8zb+Ph0QzjGFs4+hHWg=="],
+
+    "luxon": ["luxon@3.7.2", "", {}, "sha512-vtEhXh/gNjI9Yg1u4jX/0YVPMvxzHuGgCm6tC5kZyb08yjGWGnqAjGJvcXbqQR2P3MyMEFnRbpcdFS6PBcLqew=="],
+
+    "mnemonist": ["mnemonist@0.39.8", "", { "dependencies": { "obliterator": "^2.0.1" } }, "sha512-vyWo2K3fjrUw8YeeZ1zF0fy6Mu59RHokURlld8ymdUPjMlD9EC9ov1/YPqTgqRvUN9nTr3Gqfz29LYAmu0PHPQ=="],
+
+    "obliterator": ["obliterator@2.0.5", "", {}, "sha512-42CPE9AhahZRsMNslczq0ctAEtqk8Eka26QofnqC346BZdHDySk3LWka23LI7ULIw11NmltpiLagIq8gBozxTw=="],
+
+    "typescript": ["typescript@5.9.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw=="],
+
+    "undici-types": ["undici-types@7.18.2", "", {}, "sha512-AsuCzffGHJybSaRrmr5eHr81mwJU3kjw6M+uprWvCXiNeN9SOGwQ3Jn8jb8m3Z6izVgknn1R0FTCEAP2QrLY/w=="],
+  }
+}

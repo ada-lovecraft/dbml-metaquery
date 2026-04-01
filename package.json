@@ -1,0 +1,43 @@
+{
+  "name": "dbml-metaquery",
+  "version": "0.1.0",
+  "description": "Parse DBML into a navigable graph with rich metadata -- FK path finding, table info, groups, and schema search.",
+  "type": "module",
+  "bin": {
+    "dbml-metaquery": "./src/cli.ts"
+  },
+  "scripts": {
+    "build": "rm -rf dist && bun build src/index.ts --outdir dist --target node --format esm --sourcemap=linked && bunx tsc --project tsconfig.build.json",
+    "cli": "bun run src/cli.ts",
+    "test": "bun test",
+    "typecheck": "tsc --noEmit"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "exports": {
+    ".": {
+      "bun": "./src/index.ts",
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "dependencies": {
+    "@dbml/parse": "^7.0.0-alpha.0",
+    "graphology": "^0.25.4",
+    "graphology-shortest-path": "^2.1.0"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "typescript": "^5.9.3"
+  },
+  "keywords": ["dbml", "database", "schema", "graph", "path-finding", "metadata"],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/PhaseChangeSoftware/dbml-metaquery"
+  },
+  "license": "MIT"
+}
