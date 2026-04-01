@@ -25,24 +25,24 @@ const graph = new DbmlGraph(dbml)
 ### Path Finding
 
 ```typescript
-graph.findPath("dataflow_data_items", "modules")
+graph.findPath("order_items", "users")
 // [
-//   { from: { table: "dataflow_data_items", column: "dataflow_id" }, to: { table: "dataflow", column: "id" } },
-//   { from: { table: "dataflow", column: "module_id" }, to: { table: "modules", column: "id" } },
+//   { from: { table: "order_items", column: "order_id" }, to: { table: "orders", column: "id" } },
+//   { from: { table: "orders", column: "user_id" }, to: { table: "users", column: "id" } },
 // ]
 ```
 
 ### Table Metadata
 
 ```typescript
-graph.getTable("data_items")
+graph.getTable("orders")
 // {
-//   name: "data_items",
-//   note: "COBOL data item declarations (fields and groups) from the DATA DIVISION.",
+//   name: "orders",
+//   note: "Customer orders",
 //   columns: [
 //     { name: "id", type: "INTEGER" },
-//     { name: "module_id", type: "INTEGER", fk: { table: "modules", column: "id" } },
-//     { name: "levelNumber", type: "INTEGER", note: "COBOL level number (01, 05, 10, etc.)" },
+//     { name: "user_id", type: "INTEGER", fk: { table: "users", column: "id" } },
+//     { name: "product", type: "VARCHAR", note: "Product name" },
 //     ...
 //   ]
 // }
@@ -51,33 +51,33 @@ graph.getTable("data_items")
 ### Navigation
 
 ```typescript
-// What tables reference modules?
-graph.getReferencingTables("modules")
-// [{ table: "data_items", column: "module_id", myColumn: "id" }, ...]
+// What tables reference users?
+graph.getReferencingTables("users")
+// [{ table: "orders", column: "user_id", myColumn: "id" }, ...]
 
-// What's directly connected to data_items?
-graph.getNeighbors("data_items")
+// What's directly connected to orders?
+graph.getNeighbors("orders")
 // {
-//   parents: [{ table: "modules", via: "module_id" }, ...],
-//   children: [{ table: "data_item_source_lines", via: "data_item_id" }, ...]
+//   parents: [{ table: "users", via: "user_id" }],
+//   children: [{ table: "order_items", via: "order_id" }]
 // }
 
 // Schema overview
 graph.getSummary()
-// [{ name: "fileset", tableCount: 7, tables: [...] }, ...]
+// [{ name: "people", tableCount: 2, tables: ["users", "departments"] }, ...]
 
 // Search across table/column names and notes
-graph.searchSchema("copybook")
-// [{ table: "copybooks", match: "table_name", text: "copybooks" }, ...]
+graph.searchSchema("order")
+// [{ table: "orders", match: "table_name", text: "orders" }, ...]
 ```
 
 ### Groups and Colors
 
 ```typescript
 graph.getGroups()       // all TableGroups with member tables
-graph.getGroup("modules")  // { name: "fileset", tables: ["copybooks", "modules", ...] }
-graph.getTableColor("modules")  // "#3498db"
-graph.getGroupColor("fileset")  // "#3498db"
+graph.getGroup("users")  // { name: "people", tables: ["users", "departments"] }
+graph.getTableColor("users")  // "#3498db"
+graph.getGroupColor("people")  // "#3498db"
 ```
 
 ### All Methods
