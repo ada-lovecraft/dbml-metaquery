@@ -37,7 +37,7 @@
   "keywords": ["dbml", "database", "schema", "graph", "path-finding", "metadata"],
   "repository": {
     "type": "git",
-    "url": "https://github.com/PhaseChangeSoftware/dbml-metaquery"
+    "url": "git+https://github.com/ada-lovecraft/dbml-metaquery.git"
   },
   "license": "MIT"
 }
