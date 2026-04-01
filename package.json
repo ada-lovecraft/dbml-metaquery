@@ -1,6 +1,6 @@
 {
   "name": "dbml-metaquery",
-  "version": "0.1.0",
+  "version": "1.0.1",
   "description": "Parse DBML into a navigable graph with rich metadata -- FK path finding, table info, groups, and schema search.",
   "type": "module",
   "bin": {
@@ -35,7 +35,14 @@
     "@types/bun": "latest",
     "typescript": "^5.9.3"
   },
-  "keywords": ["dbml", "database", "schema", "graph", "path-finding", "metadata"],
+  "keywords": [
+    "dbml",
+    "database",
+    "schema",
+    "graph",
+    "path-finding",
+    "metadata"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/ada-lovecraft/dbml-metaquery.git"
