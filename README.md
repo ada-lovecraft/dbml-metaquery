@@ -80,6 +80,15 @@ graph.getTableColor("users")  // "#3498db"
 graph.getGroupColor("people")  // "#3498db"
 ```
 
+### Raw Graph Access
+
+```typescript
+const g = graph.getGraph() // graphology Graph copy
+g.nodes()                  // all table names
+g.edges()                  // all FK edges
+g.forEachEdge((edge, attrs) => { /* custom traversal */ })
+```
+
 ### All Methods
 
 | Method | Returns | Description |
@@ -96,6 +105,7 @@ graph.getGroupColor("people")  // "#3498db"
 | `getNeighbors(name)` | `Neighbors` | One-hop parents and children |
 | `getSummary()` | `GroupSummary[]` | Groups with table counts |
 | `searchSchema(query)` | `SearchResult[]` | Substring search across names and notes |
+| `getGraph()` | `Graph` | Copy of the underlying graphology graph for external analysis |
 
 ## CLI
 

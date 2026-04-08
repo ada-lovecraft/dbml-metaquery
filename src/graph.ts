@@ -257,6 +257,11 @@ export class DbmlGraph {
     return summary
   }
 
+  /** Get a copy of the underlying graphology graph for external analysis. */
+  getGraph(): Graph {
+    return this.graph.copy()
+  }
+
   /** Case-insensitive substring search across table names, notes, column names, and column notes. */
   searchSchema(query: string): SearchResult[] {
     const q = query.toLowerCase()
