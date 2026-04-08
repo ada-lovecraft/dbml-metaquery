@@ -1,6 +1,6 @@
 {
   "name": "dbml-metaquery",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "Parse DBML into a navigable graph with rich metadata -- FK path finding, table info, groups, and schema search.",
   "type": "module",
   "bin": {
