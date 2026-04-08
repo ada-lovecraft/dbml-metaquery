@@ -1,13 +1,13 @@
 {
   "name": "dbml-metaquery",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Parse DBML into a navigable graph with rich metadata -- FK path finding, table info, groups, and schema search.",
   "type": "module",
   "bin": {
     "dbml-metaquery": "./dist/cli.js"
   },
   "scripts": {
-    "build": "rm -rf dist && bun build src/index.ts src/cli.ts --outdir dist --target node --format esm --sourcemap=linked && printf '#!/usr/bin/env node\\n' | cat - dist/cli.js > dist/cli.tmp && mv dist/cli.tmp dist/cli.js && bunx tsc --project tsconfig.build.json",
+    "build": "rm -rf dist && bun build src/index.ts src/cli.ts --outdir dist --target node --format esm --sourcemap=linked && bun build src/index.ts src/cli.ts --outdir dist --target bun --format esm --entry-naming '[dir]/[name].bun.[ext]' && printf '#!/usr/bin/env node\\n' | cat - dist/cli.js > dist/cli.tmp && mv dist/cli.tmp dist/cli.js && bunx tsc --project tsconfig.build.json",
     "cli": "bun run src/cli.ts",
     "test": "bun test",
     "typecheck": "tsc --noEmit"
@@ -16,14 +16,17 @@
   "types": "./dist/index.d.ts",
   "files": [
     "dist",
-    "README.md",
-    "src/cli.ts"
+    "README.md"
   ],
   "exports": {
     ".": {
-      "bun": "./src/index.ts",
+      "bun": "./dist/index.bun.js",
       "import": "./dist/index.js",
       "types": "./dist/index.d.ts"
+    },
+    "./cli": {
+      "bun": "./dist/cli.bun.js",
+      "import": "./dist/cli.js"
     }
   },
   "dependencies": {
