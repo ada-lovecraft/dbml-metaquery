@@ -7,6 +7,8 @@ export type {
   GroupInfo,
   ReferencingTable,
   Neighbors,
+  SummaryTable,
   GroupSummary,
   SearchResult,
+  SearchResultResponse,
 } from "./types"

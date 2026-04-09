@@ -313,32 +313,32 @@ describe("DbmlGraph", () => {
     it("returns groups with table counts", () => {
       const graph = new DbmlGraph(SIMPLE_DBML)
       const summary = graph.getSummary()
-      const people = summary.find((s) => s.name === "people")!
+      const people = summary.find((s) => s.groupName === "people")!
       expect(people.tableCount).toBe(2)
-      expect(people.tables).toContain("users")
+      expect(people.tables).toContainEqual({ name: "users", note: "Registered users" })
     })
 
     it("includes ungrouped tables", () => {
       const graph = new DbmlGraph(SIMPLE_DBML)
       const summary = graph.getSummary()
-      const ungrouped = summary.find((s) => s.name === "ungrouped")!
+      const ungrouped = summary.find((s) => s.groupName === "ungrouped")!
       expect(ungrouped).toBeDefined()
-      expect(ungrouped.tables).toContain("orphan_table")
+      expect(ungrouped.tables).toContainEqual({ name: "orphan_table" })
     })
 
     it("returns ungrouped when no groups defined", () => {
       const graph = new DbmlGraph(MINIMAL_DBML)
       const summary = graph.getSummary()
       expect(summary).toHaveLength(1)
-      expect(summary[0]!.name).toBe("ungrouped")
+      expect(summary[0]!.groupName).toBe("ungrouped")
     })
   })
 
   describe("searchSchema", () => {
     it("matches table names", () => {
       const graph = new DbmlGraph(SIMPLE_DBML)
-      const results = graph.searchSchema("orphan")
-      expect(results).toContainEqual({
+      const { searchResults } = graph.searchSchema("orphan")
+      expect(searchResults).toContainEqual({
         table: "orphan_table",
         match: "table_name",
         text: "orphan_table",
@@ -347,32 +347,32 @@ describe("DbmlGraph", () => {
 
     it("matches table notes", () => {
       const graph = new DbmlGraph(SIMPLE_DBML)
-      const results = graph.searchSchema("Registered users")
-      expect(results.find((r) => r.match === "table_note" && r.table === "users")).toBeDefined()
+      const { searchResults } = graph.searchSchema("Registered users")
+      expect(searchResults.find((r) => r.match === "table_note" && r.table === "users")).toBeDefined()
     })
 
     it("matches column names", () => {
       const graph = new DbmlGraph(SIMPLE_DBML)
-      const results = graph.searchSchema("user_id")
-      expect(results.find((r) => r.match === "column_name" && r.table === "orders")).toBeDefined()
+      const { searchResults } = graph.searchSchema("user_id")
+      expect(searchResults.find((r) => r.match === "column_name" && r.table === "orders")).toBeDefined()
     })
 
     it("matches column notes", () => {
       const graph = new DbmlGraph(SIMPLE_DBML)
-      const results = graph.searchSchema("Number of items")
-      expect(results.find((r) => r.match === "column_note" && r.column === "quantity")).toBeDefined()
+      const { searchResults } = graph.searchSchema("Number of items")
+      expect(searchResults.find((r) => r.match === "column_note" && r.column === "quantity")).toBeDefined()
     })
 
     it("is case insensitive", () => {
       const graph = new DbmlGraph(SIMPLE_DBML)
-      const results = graph.searchSchema("USERS")
-      expect(results.find((r) => r.table === "users" && r.match === "table_name")).toBeDefined()
+      const { searchResults } = graph.searchSchema("USERS")
+      expect(searchResults.find((r) => r.table === "users" && r.match === "table_name")).toBeDefined()
     })
 
     it("sorts results: table_name > table_note > column_name > column_note", () => {
       const graph = new DbmlGraph(SIMPLE_DBML)
-      const results = graph.searchSchema("order")
-      const matchOrder = results.map((r) => r.match)
+      const { searchResults } = graph.searchSchema("order")
+      const matchOrder = searchResults.map((r) => r.match)
       const nameIdx = matchOrder.indexOf("table_name")
       const noteIdx = matchOrder.indexOf("table_note")
       const colIdx = matchOrder.indexOf("column_name")
@@ -384,7 +384,38 @@ describe("DbmlGraph", () => {
 
     it("returns empty for no matches", () => {
       const graph = new DbmlGraph(SIMPLE_DBML)
-      expect(graph.searchSchema("zzz_nonexistent")).toHaveLength(0)
+      const { searchResults, tableDescriptions } = graph.searchSchema("zzz_nonexistent")
+      expect(searchResults).toHaveLength(0)
+      expect(tableDescriptions).toHaveLength(0)
+    })
+
+    it("returns tableDescriptions for unique tables in results", () => {
+      const graph = new DbmlGraph(SIMPLE_DBML)
+      const { tableDescriptions } = graph.searchSchema("order")
+      expect(tableDescriptions).toContainEqual({ name: "orders", note: "Customer orders" })
+      expect(tableDescriptions).toContainEqual({ name: "order_items", note: "Line items within an order" })
+    })
+
+    it("deduplicates tableDescriptions", () => {
+      const graph = new DbmlGraph(SIMPLE_DBML)
+      const { tableDescriptions } = graph.searchSchema("order")
+      const ordersTables = tableDescriptions.filter((t) => t.name === "orders")
+      expect(ordersTables).toHaveLength(1)
+    })
+
+    it("sorts tableDescriptions alphabetically", () => {
+      const graph = new DbmlGraph(SIMPLE_DBML)
+      const { tableDescriptions } = graph.searchSchema("order")
+      const names = tableDescriptions.map((t) => t.name)
+      expect(names).toEqual([...names].sort())
+    })
+
+    it("omits note from tableDescriptions when table has no note", () => {
+      const graph = new DbmlGraph(SIMPLE_DBML)
+      const { tableDescriptions } = graph.searchSchema("orphan")
+      const orphan = tableDescriptions.find((t) => t.name === "orphan_table")!
+      expect(orphan).toBeDefined()
+      expect(orphan).not.toHaveProperty("note")
     })
   })
 })

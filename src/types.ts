@@ -43,10 +43,15 @@ export interface Neighbors {
   children: { table: string; via: string }[]
 }
 
-export interface GroupSummary {
+export interface SummaryTable {
   name: string
+  note?: string
+}
+
+export interface GroupSummary {
+  groupName: string
   tableCount: number
-  tables: string[]
+  tables: SummaryTable[]
 }
 
 export interface SearchResult {
@@ -54,4 +59,9 @@ export interface SearchResult {
   match: "table_name" | "table_note" | "column_name" | "column_note"
   column?: string
   text: string
+}
+
+export interface SearchResultResponse {
+  searchResults: SearchResult[]
+  tableDescriptions: SummaryTable[]
 }

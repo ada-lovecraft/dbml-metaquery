@@ -66,11 +66,12 @@ switch (command) {
     const total = summary.reduce((n, g) => n + g.tableCount, 0)
     console.log(`${total} tables in ${summary.length} groups:\n`)
     for (const group of summary) {
-      const color = graph.getGroupColor(group.name)
+      const color = graph.getGroupColor(group.groupName)
       const colorStr = color ? ` \x1b[2m${color}\x1b[0m` : ""
-      console.log(`  \x1b[1m${group.name}\x1b[0m (${group.tableCount})${colorStr}`)
+      console.log(`  \x1b[1m${group.groupName}\x1b[0m (${group.tableCount})${colorStr}`)
       for (const t of group.tables) {
-        console.log(`    ${t}`)
+        const noteStr = t.note ? ` \x1b[2m— ${t.note}\x1b[0m` : ""
+        console.log(`    ${t.name}${noteStr}`)
       }
       console.log()
     }
@@ -194,13 +195,13 @@ switch (command) {
       console.error("Usage: dbml-metaquery <dbml-path> search <query>")
       process.exit(1)
     }
-    const results = graph.searchSchema(cmdArgs[0])
+    const { searchResults } = graph.searchSchema(cmdArgs[0])
 
-    if (results.length === 0) {
+    if (searchResults.length === 0) {
       console.log(`No matches for "${cmdArgs[0]}"`)
     } else {
-      console.log(`${results.length} matches for "\x1b[1m${cmdArgs[0]}\x1b[0m":\n`)
-      for (const r of results) {
+      console.log(`${searchResults.length} matches for "\x1b[1m${cmdArgs[0]}\x1b[0m":\n`)
+      for (const r of searchResults) {
         switch (r.match) {
           case "table_name":
             console.log(`  \x1b[1m${r.table}\x1b[0m \x1b[2m(table)\x1b[0m`)

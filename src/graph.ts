@@ -16,6 +16,7 @@ import type {
   Neighbors,
   GroupSummary,
   SearchResult,
+  SearchResultResponse,
 } from "./types"
 
 interface EdgeAttributes {
@@ -234,10 +235,17 @@ export class DbmlGraph {
 
   /** High-level schema overview: groups with table counts, plus ungrouped tables. */
   getSummary(): GroupSummary[] {
+    const toSummaryTable = (name: string) => {
+      const info = this.tableInfoMap.get(name)
+      const entry: { name: string; note?: string } = { name }
+      if (info?.note) entry.note = info.note
+      return entry
+    }
+
     const summary: GroupSummary[] = this.groupList.map((g) => ({
-      name: g.name,
+      groupName: g.name,
       tableCount: g.tables.length,
-      tables: [...g.tables].sort(),
+      tables: [...g.tables].sort().map(toSummaryTable),
     }))
 
     const grouped = new Set<string>()
@@ -248,9 +256,9 @@ export class DbmlGraph {
     const ungrouped = [...this.tableSet].filter((t) => !grouped.has(t)).sort()
     if (ungrouped.length > 0) {
       summary.push({
-        name: "ungrouped",
+        groupName: "ungrouped",
         tableCount: ungrouped.length,
-        tables: ungrouped,
+        tables: ungrouped.map(toSummaryTable),
       })
     }
 
@@ -263,7 +271,7 @@ export class DbmlGraph {
   }
 
   /** Case-insensitive substring search across table names, notes, column names, and column notes. */
-  searchSchema(query: string): SearchResult[] {
+  searchSchema(query: string): SearchResultResponse {
     const q = query.toLowerCase()
     const results: SearchResult[] = []
 
@@ -287,7 +295,15 @@ export class DbmlGraph {
     const order: Record<string, number> = { table_name: 0, table_note: 1, column_name: 2, column_note: 3 }
     results.sort((a, b) => order[a.match]! - order[b.match]!)
 
-    return results
+    const uniqueTables = [...new Set(results.map((r) => r.table))].sort()
+    const tableDescriptions = uniqueTables.map((name) => {
+      const info = this.tableInfoMap.get(name)
+      const entry: { name: string; note?: string } = { name }
+      if (info?.note) entry.note = info.note
+      return entry
+    })
+
+    return { searchResults: results, tableDescriptions }
   }
 
   private findEdgeStep(current: string, next: string): PathStep | null {

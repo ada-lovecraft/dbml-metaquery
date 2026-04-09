@@ -64,7 +64,7 @@ graph.getNeighbors("orders")
 
 // Schema overview
 graph.getSummary()
-// [{ name: "people", tableCount: 2, tables: ["users", "departments"] }, ...]
+// [{ groupName: "people", tableCount: 2, tables: ["users", "departments"] }, ...]
 
 // Search across table/column names and notes
 graph.searchSchema("order")

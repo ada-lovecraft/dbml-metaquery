@@ -1,13 +1,13 @@
 {
   "name": "dbml-metaquery",
-  "version": "1.1.1",
+  "version": "1.2.0",
   "description": "Parse DBML into a navigable graph with rich metadata -- FK path finding, table info, groups, and schema search.",
   "type": "module",
   "bin": {
     "dbml-metaquery": "./dist/cli.js"
   },
   "scripts": {
-    "build": "rm -rf dist && bun build src/index.ts src/cli.ts --outdir dist --target node --format esm --sourcemap=linked && bun build src/index.ts src/cli.ts --outdir dist --target bun --format esm --entry-naming '[dir]/[name].bun.[ext]' && printf '#!/usr/bin/env node\\n' | cat - dist/cli.js > dist/cli.tmp && mv dist/cli.tmp dist/cli.js && bunx tsc --project tsconfig.build.json",
+    "build": "rm -rf dist && bun build src/index.ts src/cli.ts src/tools.ts --outdir dist --target node --format esm --sourcemap=linked && bun build src/index.ts src/cli.ts src/tools.ts --outdir dist --target bun --format esm --entry-naming '[dir]/[name].bun.[ext]' && printf '#!/usr/bin/env node\\n' | cat - dist/cli.js > dist/cli.tmp && mv dist/cli.tmp dist/cli.js && bunx tsc --project tsconfig.build.json",
     "cli": "bun run src/cli.ts",
     "test": "bun test",
     "typecheck": "tsc --noEmit"
@@ -27,6 +27,11 @@
     "./cli": {
       "bun": "./dist/cli.bun.js",
       "import": "./dist/cli.js"
+    },
+    "./tools": {
+      "bun": "./dist/tools.bun.js",
+      "import": "./dist/tools.js",
+      "types": "./dist/tools.d.ts"
     }
   },
   "dependencies": {
@@ -35,8 +40,22 @@
     "graphology-shortest-path": "^2.1.0"
   },
   "devDependencies": {
+    "@langchain/core": "^1.1.39",
     "@types/bun": "latest",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "zod": "^4.3.6"
+  },
+  "peerDependencies": {
+    "@langchain/core": ">=0.3.0",
+    "zod": ">=3.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@langchain/core": {
+      "optional": true
+    },
+    "zod": {
+      "optional": true
+    }
   },
   "keywords": [
     "dbml",
