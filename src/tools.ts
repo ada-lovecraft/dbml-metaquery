@@ -1,8 +1,11 @@
 /**
- * LangChain tool wrappers for DbmlGraph methods.
+ * Schema tool definitions and LangChain wrappers for DbmlGraph methods.
  *
- * Usage:
- *   import { DbmlGraph } from "dbml-metaquery"
+ * Framework-agnostic definitions:
+ *   import { createSchemaToolDefinitions } from "dbml-metaquery/tools"
+ *   const defs = createSchemaToolDefinitions(new DbmlGraph(dbml))
+ *
+ * LangChain tools:
  *   import { createSchemaTools } from "dbml-metaquery/tools"
  *   const tools = createSchemaTools(new DbmlGraph(dbml))
  */
@@ -11,9 +14,16 @@ import { tool } from "@langchain/core/tools"
 import { z } from "zod"
 import type { DbmlGraph } from "./graph"
 
-export function createSchemaTools(graph: DbmlGraph) {
-  const schemaSearch = tool(
-    async ({ query }) => JSON.stringify(graph.searchSchema(query)),
+export interface SchemaToolDefinition {
+  name: string
+  description: string
+  schema: z.ZodObject<z.ZodRawShape>
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  invoke: (input: any) => string
+}
+
+export function createSchemaToolDefinitions(graph: DbmlGraph): SchemaToolDefinition[] {
+  return [
     {
       name: "schema_search",
       description:
@@ -25,11 +35,8 @@ export function createSchemaTools(graph: DbmlGraph) {
           "Case-insensitive substring to search for across table names, column names, and notes",
         ),
       }),
+      invoke: ({ query }) => JSON.stringify(graph.searchSchema(query)),
     },
-  )
-
-  const schemaSummary = tool(
-    async () => JSON.stringify(graph.getSummary()),
     {
       name: "schema_summary",
       description:
@@ -38,11 +45,8 @@ export function createSchemaTools(graph: DbmlGraph) {
         "Ungrouped tables appear under a synthetic 'ungrouped' group. " +
         "Use this to orient yourself before drilling into specific tables.",
       schema: z.object({}),
+      invoke: () => JSON.stringify(graph.getSummary()),
     },
-  )
-
-  const schemaTableInfo = tool(
-    async ({ table }) => JSON.stringify(graph.getTable(table) ?? null),
     {
       name: "schema_table_info",
       description:
@@ -51,11 +55,8 @@ export function createSchemaTools(graph: DbmlGraph) {
       schema: z.object({
         table: z.string().describe("Exact table name (case-sensitive)"),
       }),
+      invoke: ({ table }) => JSON.stringify(graph.getTable(table) ?? null),
     },
-  )
-
-  const schemaFindJoinPath = tool(
-    async ({ from, to }) => JSON.stringify(graph.findPath(from, to)),
     {
       name: "schema_find_join_path",
       description:
@@ -67,11 +68,8 @@ export function createSchemaTools(graph: DbmlGraph) {
         from: z.string().describe("Source table name (case-sensitive)"),
         to: z.string().describe("Target table name (case-sensitive)"),
       }),
+      invoke: ({ from, to }) => JSON.stringify(graph.findPath(from, to)),
     },
-  )
-
-  const schemaNeighbors = tool(
-    async ({ table }) => JSON.stringify(graph.getNeighbors(table)),
     {
       name: "schema_neighbors",
       description:
@@ -82,11 +80,8 @@ export function createSchemaTools(graph: DbmlGraph) {
       schema: z.object({
         table: z.string().describe("Exact table name (case-sensitive)"),
       }),
+      invoke: ({ table }) => JSON.stringify(graph.getNeighbors(table)),
     },
-  )
-
-  const schemaRelationships = tool(
-    async ({ table }) => JSON.stringify(graph.getRelationships(table)),
     {
       name: "schema_relationships",
       description:
@@ -101,11 +96,8 @@ export function createSchemaTools(graph: DbmlGraph) {
             "Optional table name to filter relationships (case-sensitive)",
           ),
       }),
+      invoke: ({ table }) => JSON.stringify(graph.getRelationships(table)),
     },
-  )
-
-  const schemaReferencingTables = tool(
-    async ({ table }) => JSON.stringify(graph.getReferencingTables(table)),
     {
       name: "schema_referencing_tables",
       description:
@@ -115,16 +107,20 @@ export function createSchemaTools(graph: DbmlGraph) {
       schema: z.object({
         table: z.string().describe("Exact table name (case-sensitive)"),
       }),
+      invoke: ({ table }) => JSON.stringify(graph.getReferencingTables(table)),
     },
-  )
-
-  return [
-    schemaSearch,
-    schemaSummary,
-    schemaTableInfo,
-    schemaFindJoinPath,
-    schemaNeighbors,
-    schemaRelationships,
-    schemaReferencingTables,
   ]
+}
+
+export function createSchemaTools(graph: DbmlGraph) {
+  return createSchemaToolDefinitions(graph).map((def) =>
+    tool(
+      async (input: Record<string, unknown>) => def.invoke(input as never),
+      {
+        name: def.name,
+        description: def.description,
+        schema: def.schema,
+      },
+    ),
+  )
 }

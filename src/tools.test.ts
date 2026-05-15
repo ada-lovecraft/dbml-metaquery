@@ -1,6 +1,6 @@
 import { describe, it, expect } from "bun:test"
 import { DbmlGraph } from "./graph"
-import { createSchemaTools } from "./tools"
+import { createSchemaTools, createSchemaToolDefinitions } from "./tools"
 
 const SIMPLE_DBML = `
 Table "users" {
@@ -33,6 +33,47 @@ TableGroup "commerce" {
   "order_items"
 }
 `
+
+describe("createSchemaToolDefinitions", () => {
+  const graph = new DbmlGraph(SIMPLE_DBML)
+  const defs = createSchemaToolDefinitions(graph)
+
+  it("returns 7 definitions", () => {
+    expect(defs).toHaveLength(7)
+  })
+
+  it("all definitions have name, description, schema, and invoke", () => {
+    for (const def of defs) {
+      expect(typeof def.name).toBe("string")
+      expect(typeof def.description).toBe("string")
+      expect(def.schema).toBeDefined()
+      expect(typeof def.invoke).toBe("function")
+    }
+  })
+
+  it("names match the LangChain tool names", () => {
+    const langchainTools = createSchemaTools(graph)
+    const defNames = defs.map((d) => d.name).sort()
+    const toolNames = langchainTools.map((t) => t.name).sort()
+    expect(defNames).toEqual(toolNames)
+  })
+
+  it("invoke returns the same results as the LangChain tools", async () => {
+    const langchainTools = createSchemaTools(graph)
+    const searchDef = defs.find((d) => d.name === "schema_search")!
+    const searchTool = langchainTools.find((t) => t.name === "schema_search")!
+    const defResult = searchDef.invoke({ query: "user" })
+    const toolResult = await (searchTool as any).invoke({ query: "user" })
+    expect(defResult).toBe(toolResult)
+  })
+
+  it("invoke is synchronous", () => {
+    const summaryDef = defs.find((d) => d.name === "schema_summary")!
+    const result = summaryDef.invoke({})
+    expect(typeof result).toBe("string")
+    JSON.parse(result) // should not throw
+  })
+})
 
 describe("createSchemaTools", () => {
   const graph = new DbmlGraph(SIMPLE_DBML)
