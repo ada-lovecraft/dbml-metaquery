@@ -1,6 +1,6 @@
 import { describe, it, expect } from "bun:test"
 import { DbmlGraph } from "./graph"
-import { createSchemaTools, createSchemaToolDefinitions } from "./tools"
+import { bindSchemaTools, schemaToolDefinitions } from "./tools"
 
 const SIMPLE_DBML = `
 Table "users" {
@@ -34,71 +34,40 @@ TableGroup "commerce" {
 }
 `
 
-describe("createSchemaToolDefinitions", () => {
-  const graph = new DbmlGraph(SIMPLE_DBML)
-  const defs = createSchemaToolDefinitions(graph)
-
-  it("returns 7 definitions", () => {
-    expect(defs).toHaveLength(7)
+describe("schemaToolDefinitions", () => {
+  it("contains 7 definitions", () => {
+    expect(schemaToolDefinitions).toHaveLength(7)
   })
 
-  it("all definitions have name, description, schema, and invoke", () => {
-    for (const def of defs) {
+  it("all definitions have name, description, schema, and handler", () => {
+    for (const def of schemaToolDefinitions) {
       expect(typeof def.name).toBe("string")
       expect(typeof def.description).toBe("string")
       expect(def.schema).toBeDefined()
-      expect(typeof def.invoke).toBe("function")
+      expect(typeof def.handler).toBe("function")
     }
   })
 
-  it("names match the LangChain tool names", () => {
-    const langchainTools = createSchemaTools(graph)
-    const defNames = defs.map((d) => d.name).sort()
-    const toolNames = langchainTools.map((t) => t.name).sort()
-    expect(defNames).toEqual(toolNames)
-  })
-
-  it("invoke returns the same results as the LangChain tools", async () => {
-    const langchainTools = createSchemaTools(graph)
-    const searchDef = defs.find((d) => d.name === "schema_search")!
-    const searchTool = langchainTools.find((t) => t.name === "schema_search")!
-    const defResult = searchDef.invoke({ query: "user" })
-    const toolResult = await (searchTool as any).invoke({ query: "user" })
-    expect(defResult).toBe(toolResult)
-  })
-
-  it("invoke is synchronous", () => {
-    const summaryDef = defs.find((d) => d.name === "schema_summary")!
-    const result = summaryDef.invoke({})
-    expect(typeof result).toBe("string")
-    JSON.parse(result) // should not throw
-  })
-})
-
-describe("createSchemaTools", () => {
-  const graph = new DbmlGraph(SIMPLE_DBML)
-  const tools = createSchemaTools(graph)
-
-  it("returns 7 tools", () => {
-    expect(tools).toHaveLength(7)
-  })
-
-  it("all tools have unique names", () => {
-    const names = tools.map((t) => t.name)
+  it("all definitions have unique names", () => {
+    const names = schemaToolDefinitions.map((d) => d.name)
     expect(new Set(names).size).toBe(names.length)
   })
 
-  it("all tool names start with schema_", () => {
-    for (const t of tools) {
-      expect(t.name).toMatch(/^schema_/)
+  it("all names start with schema_", () => {
+    for (const def of schemaToolDefinitions) {
+      expect(def.name).toMatch(/^schema_/)
     }
   })
 
-  it("all tools have descriptions", () => {
-    for (const t of tools) {
-      expect(t.description.length).toBeGreaterThan(0)
-    }
+  it("does not require a graph to inspect metadata", () => {
+    const names = schemaToolDefinitions.map((d) => d.name)
+    expect(names).toContain("schema_search")
   })
+})
+
+describe("bindSchemaTools", () => {
+  const graph = new DbmlGraph(SIMPLE_DBML)
+  const tools = bindSchemaTools(graph)
 
   function findTool(name: string) {
     const t = tools.find((t) => t.name === name)
@@ -106,112 +75,133 @@ describe("createSchemaTools", () => {
     return t
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  async function invokeTool(name: string, input: Record<string, any> = {}): Promise<string> {
-    const t = findTool(name)
-    return (t as any).invoke(input) as Promise<string>
-  }
+  it("returns one bound tool per definition", () => {
+    expect(tools).toHaveLength(schemaToolDefinitions.length)
+  })
+
+  it("preserves metadata from the definitions", () => {
+    for (let i = 0; i < tools.length; i++) {
+      expect(tools[i]!.name).toBe(schemaToolDefinitions[i]!.name)
+      expect(tools[i]!.description).toBe(schemaToolDefinitions[i]!.description)
+      expect(tools[i]!.schema).toBe(schemaToolDefinitions[i]!.schema)
+    }
+  })
 
   describe("schema_search", () => {
-    it("returns JSON with search results", async () => {
-      const result = await invokeTool("schema_search", { query: "user" })
-      const parsed = JSON.parse(result)
-      expect(parsed.searchResults.length).toBeGreaterThan(0)
-      expect(parsed.tableDescriptions.length).toBeGreaterThan(0)
+    it("returns object with search results", () => {
+      const result = findTool("schema_search").invoke({ query: "user" }) as {
+        searchResults: unknown[]
+        tableDescriptions: unknown[]
+      }
+      expect(result.searchResults.length).toBeGreaterThan(0)
+      expect(result.tableDescriptions.length).toBeGreaterThan(0)
     })
 
-    it("returns empty results for no matches", async () => {
-      const result = await invokeTool("schema_search", { query: "zzz" })
-      const parsed = JSON.parse(result)
-      expect(parsed.searchResults).toHaveLength(0)
+    it("returns empty results for no matches", () => {
+      const result = findTool("schema_search").invoke({ query: "zzz" }) as {
+        searchResults: unknown[]
+      }
+      expect(result.searchResults).toHaveLength(0)
     })
   })
 
   describe("schema_summary", () => {
-    it("returns JSON with group summaries", async () => {
-      const result = await invokeTool("schema_summary")
-      const parsed = JSON.parse(result)
-      expect(parsed.length).toBeGreaterThan(0)
-      const commerce = parsed.find((g: { groupName: string }) => g.groupName === "commerce")
+    it("returns array of group summaries", () => {
+      const result = findTool("schema_summary").invoke({}) as Array<{
+        groupName: string
+        tableCount: number
+      }>
+      expect(result.length).toBeGreaterThan(0)
+      const commerce = result.find((g) => g.groupName === "commerce")
       expect(commerce).toBeDefined()
-      expect(commerce.tableCount).toBe(2)
+      expect(commerce!.tableCount).toBe(2)
     })
   })
 
   describe("schema_table_info", () => {
-    it("returns JSON with table columns", async () => {
-      const result = await invokeTool("schema_table_info", { table: "users" })
-      const parsed = JSON.parse(result)
-      expect(parsed.name).toBe("users")
-      expect(parsed.columns.length).toBeGreaterThan(0)
+    it("returns object with table columns", () => {
+      const result = findTool("schema_table_info").invoke({ table: "users" }) as {
+        name: string
+        columns: unknown[]
+      }
+      expect(result.name).toBe("users")
+      expect(result.columns.length).toBeGreaterThan(0)
     })
 
-    it("returns null for nonexistent table", async () => {
-      const result = await invokeTool("schema_table_info", { table: "nope" })
-      expect(result).toBe("null")
+    it("returns null for nonexistent table", () => {
+      const result = findTool("schema_table_info").invoke({ table: "nope" })
+      expect(result).toBeNull()
     })
   })
 
   describe("schema_find_join_path", () => {
-    it("returns JSON with path steps", async () => {
-      const result = await invokeTool("schema_find_join_path", { from: "orders", to: "users" })
-      const parsed = JSON.parse(result)
-      expect(parsed).toHaveLength(1)
-      expect(parsed[0].from.table).toBe("orders")
-      expect(parsed[0].to.table).toBe("users")
+    it("returns array of path steps", () => {
+      const result = findTool("schema_find_join_path").invoke({
+        from: "orders",
+        to: "users",
+      }) as Array<{ from: { table: string }; to: { table: string } }>
+      expect(result).toHaveLength(1)
+      expect(result[0]!.from.table).toBe("orders")
+      expect(result[0]!.to.table).toBe("users")
     })
 
-    it("returns null for unreachable tables", async () => {
-      const result = await invokeTool("schema_find_join_path", { from: "users", to: "orphan" })
-      expect(result).toBe("null")
+    it("returns null for unreachable tables", () => {
+      const result = findTool("schema_find_join_path").invoke({
+        from: "users",
+        to: "orphan",
+      })
+      expect(result).toBeNull()
     })
 
-    it("throws for unknown table", async () => {
-      expect(invokeTool("schema_find_join_path", { from: "nonexistent", to: "users" })).rejects.toThrow()
+    it("throws for unknown table", () => {
+      expect(() =>
+        findTool("schema_find_join_path").invoke({ from: "nonexistent", to: "users" }),
+      ).toThrow()
     })
   })
 
   describe("schema_neighbors", () => {
-    it("returns JSON with parents and children", async () => {
-      const result = await invokeTool("schema_neighbors", { table: "orders" })
-      const parsed = JSON.parse(result)
-      expect(parsed.parents).toContainEqual({ table: "users", via: "user_id" })
-      expect(parsed.children).toContainEqual({ table: "order_items", via: "order_id" })
+    it("returns parents and children", () => {
+      const result = findTool("schema_neighbors").invoke({ table: "orders" }) as {
+        parents: Array<{ table: string; via: string }>
+        children: Array<{ table: string; via: string }>
+      }
+      expect(result.parents).toContainEqual({ table: "users", via: "user_id" })
+      expect(result.children).toContainEqual({ table: "order_items", via: "order_id" })
     })
   })
 
   describe("schema_relationships", () => {
-    it("returns all relationships when no table given", async () => {
-      const result = await invokeTool("schema_relationships")
-      const parsed = JSON.parse(result)
-      expect(parsed).toHaveLength(2)
+    it("returns all relationships when no table given", () => {
+      const result = findTool("schema_relationships").invoke({}) as unknown[]
+      expect(result).toHaveLength(2)
     })
 
-    it("filters by table when provided", async () => {
-      const result = await invokeTool("schema_relationships", { table: "users" })
-      const parsed = JSON.parse(result)
-      expect(parsed.length).toBeGreaterThan(0)
-      for (const r of parsed) {
+    it("filters by table when provided", () => {
+      const result = findTool("schema_relationships").invoke({ table: "users" }) as Array<{
+        childTable: string
+        parentTable: string
+      }>
+      expect(result.length).toBeGreaterThan(0)
+      for (const r of result) {
         expect(r.childTable === "users" || r.parentTable === "users").toBe(true)
       }
     })
   })
 
   describe("schema_referencing_tables", () => {
-    it("returns tables that FK into the given table", async () => {
-      const result = await invokeTool("schema_referencing_tables", { table: "orders" })
-      const parsed = JSON.parse(result)
-      expect(parsed).toContainEqual({
+    it("returns tables that FK into the given table", () => {
+      const result = findTool("schema_referencing_tables").invoke({ table: "orders" })
+      expect(result).toContainEqual({
         table: "order_items",
         column: "order_id",
         myColumn: "id",
       })
     })
 
-    it("returns empty for table with no inbound FKs", async () => {
-      const result = await invokeTool("schema_referencing_tables", { table: "orphan" })
-      const parsed = JSON.parse(result)
-      expect(parsed).toHaveLength(0)
+    it("returns empty for table with no inbound FKs", () => {
+      const result = findTool("schema_referencing_tables").invoke({ table: "orphan" }) as unknown[]
+      expect(result).toHaveLength(0)
     })
   })
 })
