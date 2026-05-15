@@ -64,11 +64,31 @@ graph.getNeighbors("orders")
 
 // Schema overview
 graph.getSummary()
-// [{ groupName: "people", tableCount: 2, tables: ["users", "departments"] }, ...]
+// [
+//   {
+//     groupName: "people",
+//     tableCount: 2,
+//     tables: [
+//       { name: "users", note: "Registered users" },
+//       { name: "departments", note: "Organizational departments" },
+//     ],
+//   },
+//   ...
+// ]
 
 // Search across table/column names and notes
 graph.searchSchema("order")
-// [{ table: "orders", match: "table_name", text: "orders" }, ...]
+// {
+//   searchResults: [
+//     { table: "orders", match: "table_name", text: "orders" },
+//     { table: "order_items", match: "table_name", text: "order_items" },
+//     ...
+//   ],
+//   tableDescriptions: [
+//     { name: "orders", note: "Customer orders" },
+//     { name: "order_items", note: "Line items within an order" },
+//   ],
+// }
 ```
 
 ### Groups and Colors
@@ -103,9 +123,74 @@ g.forEachEdge((edge, attrs) => { /* custom traversal */ })
 | `getGroupColor(name)` | `string \| undefined` | Group color |
 | `getReferencingTables(name)` | `ReferencingTable[]` | Tables that FK into this table |
 | `getNeighbors(name)` | `Neighbors` | One-hop parents and children |
-| `getSummary()` | `GroupSummary[]` | Groups with table counts |
-| `searchSchema(query)` | `SearchResult[]` | Substring search across names and notes |
+| `getSummary()` | `GroupSummary[]` | Groups with table counts, member tables, and notes |
+| `searchSchema(query)` | `SearchResultResponse` | Substring search across names and notes, with table descriptions |
 | `getGraph()` | `Graph` | Copy of the underlying graphology graph for external analysis |
+
+## Agent Tool Definitions (`dbml-metaquery/tools`)
+
+The `dbml-metaquery/tools` subpath exports framework-agnostic tool definitions designed for LLM agents. Each definition includes a name, description, Zod input schema, and a handler. Schemas are Zod, so they plug directly into LangChain, the Vercel AI SDK, MCP servers, and anything else that accepts Zod schemas.
+
+`zod` is an optional peer dependency -- install it only if you import this subpath.
+
+```bash
+npm install zod
+```
+
+### Static metadata (no graph required)
+
+Useful for generating docs, types, or adapting the definitions to your framework of choice without building a `DbmlGraph`.
+
+```typescript
+import { schemaToolDefinitions } from "dbml-metaquery/tools"
+
+for (const def of schemaToolDefinitions) {
+  console.log(def.name, def.description)
+  // def.schema is a Zod schema
+}
+```
+
+### Bound to a graph instance
+
+```typescript
+import { DbmlGraph } from "dbml-metaquery"
+import { bindSchemaTools } from "dbml-metaquery/tools"
+
+const graph = new DbmlGraph(readFileSync("model.dbml", "utf-8"))
+const tools = bindSchemaTools(graph)
+
+const search = tools.find((t) => t.name === "schema_search")!
+search.invoke({ query: "orders" })
+// { searchResults: [...], tableDescriptions: [...] }
+```
+
+`invoke` returns raw objects -- consumers stringify if needed (e.g. when feeding tool output to an LLM).
+
+### Wrapping for LangChain
+
+```typescript
+import { tool } from "@langchain/core/tools"
+import { bindSchemaTools } from "dbml-metaquery/tools"
+
+const langchainTools = bindSchemaTools(graph).map((def) =>
+  tool(
+    async (input) => JSON.stringify(def.invoke(input)),
+    { name: def.name, description: def.description, schema: def.schema },
+  ),
+)
+```
+
+### Available tools
+
+| Name | Input | Returns (parsed) |
+|---|---|---|
+| `schema_search` | `{ query: string }` | `{ searchResults, tableDescriptions }` |
+| `schema_summary` | `{}` | `GroupSummary[]` |
+| `schema_table_info` | `{ table: string }` | `TableInfo \| null` |
+| `schema_find_join_path` | `{ from: string, to: string }` | `PathStep[] \| null` (throws on unknown table) |
+| `schema_neighbors` | `{ table: string }` | `Neighbors` |
+| `schema_relationships` | `{ table?: string }` | `Relationship[]` |
+| `schema_referencing_tables` | `{ table: string }` | `ReferencingTable[]` |
 
 ## CLI
 
